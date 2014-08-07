@@ -1,0 +1,360 @@
+//
+//  CrashViewController.m
+//  AnshangAppStore
+//
+//  Created by King on 13-5-28.
+//  Copyright (c) 2013年 anshang. All rights reserved.
+//
+
+#import "CrashViewController.h"
+#import "sys/utsname.h"
+
+#define SCREEN_HEIGHT [UIScreen mainScreen].applicationFrame.size.height
+
+@interface CrashViewController ()
+{
+    int  StatusBarHeight;
+}
+
+@end
+
+@implementation CrashViewController
+
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
+{
+    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
+    if (self) {
+        // Custom initialization
+        self.requestBool = YES;
+    }
+    return self;
+}
+
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+	// Do any additional setup after loading the view.
+    UIView *view = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 320, SCREEN_HEIGHT)];
+    view.backgroundColor = [UIColor whiteColor];
+    self.view = view;
+    
+    //取颜色值
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSString *colorStr = [defaults valueForKey:@"color"];
+
+    if ( IOS7_OR_LATER ) {
+        UIView *view = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 320, 20)];
+        view.backgroundColor =[MyColor hexStringToColor:colorStr];
+        [self.view addSubview: view];
+
+        self.edgesForExtendedLayout = UIRectEdgeNone;
+        self.extendedLayoutIncludesOpaqueBars = NO;
+        self.modalPresentationCapturesStatusBarAppearance = YES;
+        StatusBarHeight=20;
+        
+    } else {
+        
+        StatusBarHeight=0;
+    }
+    
+    UIScrollView *scrollView = [[UIScrollView alloc] initWithFrame:CGRectMake(0, StatusBarHeight, 320, view.frame.size.height)];
+    [self.view addSubview:scrollView];
+
+    //创建navigationBar
+    UIView *barView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 320, 44)];
+    barView.backgroundColor = [UIColor colorWithRed:0.3 green:0.56 blue:0.98 alpha:1];
+    [scrollView addSubview:barView];
+    
+    UILabel *titleNameLabel = [[UILabel alloc] initWithFrame:CGRectMake(100, 0, 120, 44)];
+    titleNameLabel.text = @"异常反馈";
+    titleNameLabel.textAlignment = UITextAlignmentCenter;
+    titleNameLabel.textColor = [UIColor whiteColor];
+    titleNameLabel.backgroundColor = [UIColor clearColor];
+    titleNameLabel.font = [UIFont boldSystemFontOfSize:20];
+    [barView addSubview:titleNameLabel];
+    
+    UIButton *leftButton = [UIButton buttonWithType:UIButtonTypeCustom];
+    leftButton.frame = CGRectMake(2, 4, 36, 36);
+    leftButton.imageEdgeInsets = UIEdgeInsetsMake(6, 6, 6, 6);
+    [leftButton setImage:[UIImage imageNamed:@"ic_left_arrow.png"] forState:UIControlStateNormal];
+    [leftButton addTarget:self
+                   action:@selector(backMainViewController)
+         forControlEvents:UIControlEventTouchUpInside];
+    [barView addSubview:leftButton];
+    
+    UIButton *rightButton = [UIButton buttonWithType:UIButtonTypeCustom];
+    rightButton.frame = CGRectMake(270, 10, 40, 24);
+    rightButton.backgroundColor = [UIColor whiteColor];
+    [rightButton setTitle:@"提交" forState:UIControlStateNormal];
+    rightButton.titleLabel.font = [UIFont systemFontOfSize:12];
+    rightButton.titleLabel.textColor = [UIColor blackColor];
+    [rightButton addTarget:self action:@selector(backMainViewController) forControlEvents:UIControlEventTouchUpInside];
+    [barView addSubview:rightButton];
+
+
+    UIImageView *imageView = [[UIImageView alloc] initWithFrame:CGRectMake(70, 55, 61, 52)];
+    imageView.image = [UIImage imageNamed:@"exception.png"];
+    [scrollView addSubview:imageView];
+    
+    UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(140, 55, 110, 52)];
+    label.text = @"对于上一次的异常，表示非常抱歉！";
+    label.numberOfLines = 10;
+    label.font = [UIFont systemFontOfSize:12];
+    [scrollView addSubview:label];
+    
+    UILabel *colorLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 118, 320, 20)];
+    colorLabel.backgroundColor = [UIColor lightGrayColor];
+    [scrollView addSubview:colorLabel];
+    
+    UILabel *fankuiLabel = [[UILabel alloc] initWithFrame:CGRectMake(10, 0, 100, 20)];
+    fankuiLabel.backgroundColor = [UIColor clearColor];
+    fankuiLabel.font = [UIFont systemFontOfSize:12];
+    fankuiLabel.text = @"反馈";
+    [colorLabel addSubview:fankuiLabel];
+    
+//    UITextField *emailField = [[UITextField alloc] initWithFrame:CGRectMake(10, 145, 300, 30)];
+//    emailField.borderStyle = UITextBorderStyleRoundedRect;
+//    emailField.contentVerticalAlignment = UIControlContentVerticalAlignmentCenter;
+//    emailField.placeholder = @"";
+//    [scrollView addSubview:emailField];
+    
+    HPGrowingTextView *emailText = [[HPGrowingTextView alloc] initWithFrame:CGRectMake(10, 145, 300, 30)];
+    emailText.internalTextView.backgroundColor = [UIColor colorWithPatternImage:[UIImage imageNamed:@"share_content_background.png"]];
+    emailText.minNumberOfLines = 1;
+    emailText.maxNumberOfLines = 1;
+    emailText.delegate = self;
+    emailText.tag = 5005;
+    emailText.placeholder = @"您的邮箱地址（可选）";
+    emailText.returnKeyType = UIReturnKeyDone;
+    emailText.font = [UIFont systemFontOfSize:12];
+    emailText.contentMode = UIViewContentModeCenter;
+    [scrollView addSubview:emailText];
+
+    
+//    UITextView *textView = [[UITextView alloc] initWithFrame:CGRectMake(10, 185, 300, 100)];
+////    textView.
+////    textView.placeholder = @"怎样操作出现的异常（可选）";
+//    [scrollView addSubview:textView];
+    
+    
+    HPGrowingTextView *addressText = [[HPGrowingTextView alloc] initWithFrame:CGRectMake(10, 185, 300, 30)];
+    addressText.internalTextView.backgroundColor = [UIColor colorWithPatternImage:[UIImage imageNamed:@"share_content_background.png"]];
+    addressText.font = [UIFont systemFontOfSize:12];
+    addressText.contentMode = UIViewContentModeCenter;
+    addressText.minNumberOfLines = 5;
+    addressText.maxNumberOfLines = 5;
+    addressText.returnKeyType = UIReturnKeyDone;
+    addressText.internalTextView.showsVerticalScrollIndicator = NO;
+    addressText.placeholder = @"怎样操作出现的异常（可选）";
+    addressText.delegate = self;
+    addressText.tag = 5006;
+    [scrollView addSubview:addressText];
+    
+    UILabel *colorLabel2 = [[UILabel alloc] initWithFrame:CGRectMake(0, 285, 320, 20)];
+    colorLabel2.backgroundColor = [UIColor lightGrayColor];
+    [scrollView addSubview:colorLabel2];
+    
+    UILabel *fankuiLabel2 = [[UILabel alloc] initWithFrame:CGRectMake(10, 0, 100, 20)];
+    fankuiLabel2.backgroundColor = [UIColor clearColor];
+    fankuiLabel2.font = [UIFont systemFontOfSize:12];
+    fankuiLabel2.text = @"隐私";
+    [colorLabel2 addSubview:fankuiLabel2];
+    
+    UILabel *yinsiLabel = [[UILabel alloc] initWithFrame:CGRectMake(10, 310, 300, 15)];
+    yinsiLabel.text = @"包含设备参数，但不会读取您的隐私数据！";
+    yinsiLabel.font = [UIFont systemFontOfSize:12];
+    [scrollView addSubview:yinsiLabel];
+
+    UILabel *colorLabel3 = [[UILabel alloc] initWithFrame:CGRectMake(0, 330, 320, 20)];
+    colorLabel3.backgroundColor = [UIColor lightGrayColor];
+    [scrollView addSubview:colorLabel3];
+    
+    UILabel *fankuiLabel3 = [[UILabel alloc] initWithFrame:CGRectMake(10, 0, 100, 20)];
+    fankuiLabel3.backgroundColor = [UIColor clearColor];
+    fankuiLabel3.font = [UIFont systemFontOfSize:12];
+    fankuiLabel3.text = @"隐私";
+    [colorLabel3 addSubview:fankuiLabel3];
+
+    UILabel *shuomingLabel = [[UILabel alloc] initWithFrame:CGRectMake(10, 355, 300, 60)];
+    shuomingLabel.font = [UIFont systemFontOfSize:12];
+    shuomingLabel.text = @"程序运行中遇到问题需要关闭。我们对此引起的不便表示抱歉。我们已经创建了一个错误报告，您可以将其发送给我们以帮助我们改善用户体验。我们对此深表感谢！";
+    shuomingLabel.numberOfLines = 5;
+    [scrollView addSubview:shuomingLabel];
+    
+}
+
+- (void)growingTextViewDidChange:(HPGrowingTextView *)growingTextView
+{
+    if (growingTextView.tag == 5005) {
+        if(growingTextView.text.length > 0)
+            growingTextView.placeholderLabel.alpha = 0;
+        else
+            growingTextView.placeholderLabel.alpha = 1;
+    }
+    
+    if (growingTextView.tag == 5006) {
+        if(growingTextView.text.length > 0)
+            growingTextView.placeholderLabel.alpha = 0;
+        else
+            growingTextView.placeholderLabel.alpha = 1;
+        
+    }
+    
+}
+
+- (BOOL)growingTextViewShouldBeginEditing:(HPGrowingTextView *)growingTextView
+{
+    if (growingTextView.tag == 5005) {
+        //开始编辑时使整个视图整体向上移
+        [UIView beginAnimations:@"up" context:nil];
+        [UIView setAnimationDuration:0.5];
+        [UIView setAnimationCurve:UIViewAnimationCurveEaseInOut];
+        self.view.frame = CGRectMake(0, -10, 320, 480);
+        [UIView commitAnimations];
+    }
+    
+    if (growingTextView.tag == 5006) {
+        //开始编辑时使整个视图整体向上移
+        [UIView beginAnimations:@"up" context:nil];
+        [UIView setAnimationDuration:0.5];
+        [UIView setAnimationCurve:UIViewAnimationCurveEaseInOut];
+        self.view.frame = CGRectMake(0, -80, 320, 480);
+        [UIView commitAnimations];
+    }
+    
+    return YES;
+}
+
+-(BOOL)growingTextViewShouldReturn:(HPGrowingTextView *)growingTextView
+{
+    //开始编辑时使整个视图整体向上移
+    [UIView beginAnimations:@"up" context:nil];
+    [UIView setAnimationDuration:0.4];
+    [UIView setAnimationCurve:UIViewAnimationCurveEaseInOut];
+    self.view.frame = CGRectMake(0, 20, 320, 480);
+    [UIView commitAnimations];
+    
+    [growingTextView resignFirstResponder];
+
+
+    return YES;
+}
+
+- (void)backMainViewController
+{
+    HPGrowingTextView *textView1 = (HPGrowingTextView *)[self.view viewWithTag:5005];
+    HPGrowingTextView *textView2 = (HPGrowingTextView *)[self.view viewWithTag:5006];
+    
+    //从document中获取crash
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSArray *crashArray = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+    NSString *documentsDirectory = [crashArray objectAtIndex:0];
+    //        NSFileManager *logInFileManager = [NSFileManager defaultManager];
+    NSString *crashDirectory = [documentsDirectory stringByAppendingPathComponent:@"crash.txt"];
+    [defaults setValue:@"YES" forKey:@"crash"];
+    //    [urlStr writeToFile:crashDirectory atomically:YES encoding:NSUTF8StringEncoding error:nil];
+    NSArray *crashArray2 = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+    NSString *documentsDirectory2 = [crashArray2 objectAtIndex:0];
+    NSString *crashDirectory2 = [documentsDirectory2 stringByAppendingPathComponent:@"logIn.txt"];
+    [@"" writeToFile:crashDirectory2 atomically:YES encoding:NSUTF8StringEncoding error:nil];
+
+    
+    NSString *crashStr = [NSString stringWithContentsOfFile:crashDirectory encoding:NSUTF8StringEncoding error:nil];
+    NSString *replaceCrash = [crashStr stringByReplacingOccurrencesOfString:@"\"" withString:@"\\\""];
+    
+    NSDate *date = [NSDate dateWithTimeIntervalSinceNow:0];
+    NSTimeInterval data= [date timeIntervalSince1970]*1000;
+    NSString *timeString = [NSString stringWithFormat:@"%f", data];//转为字符型
+    
+    NSString *version = [[UIDevice currentDevice] systemVersion];
+    NSString *phone = [self deviceString];
+    
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    NSString *cid = [userDefaults objectForKey:@"cid"];
+    NSString *appid = [userDefaults objectForKey:@"appid"];
+    
+    NSDictionary *anshangDisplayDic = [[NSBundle mainBundle] infoDictionary];
+    NSString *anshangDisplayStr = [anshangDisplayDic objectForKey:@"CFBundleDisplayName"];
+    
+    NSString *requestPostString = [NSString stringWithFormat:@"{\"cid\":\"%@\",\"appid\":\"%@\", \"type\":\"1\",\"level\":\"4\",\"system\":\"%@\", \"model\":\"%@\", \"crashTime\":\"%@\", \"email\":\"%@\",\"description\":\"%@\",\"errorMessage\":\"%@\",\"errorLog\":\"%@\"}", cid, appid, version, phone, timeString, textView1.text, textView2.text, anshangDisplayStr, replaceCrash];
+    
+    NSLog(@"%@", requestPostString);
+    [@"" writeToFile:crashDirectory atomically:YES encoding:NSUTF8StringEncoding error:nil];
+
+    if (self.requestBool) {
+        
+        NSString *http = [userDefaults objectForKey:@"http"];
+        NSURL *url = [NSURL URLWithString:[NSString stringWithFormat:@"%@/errorLog", http]];
+        self.request= [[ASIFormDataRequest alloc] initWithURL:url];
+        self.request.tag = 10003;
+        [self.request addPostValue:requestPostString forKey:@"p"];
+        [self.request addPostValue:@"true" forKey:@"debug"];
+        [self.request setDelegate:self];
+        [self.request startAsynchronous];
+        
+        self.requestBool = NO;
+        
+    }     
+    
+}
+
+- (void)requestFinished:(ASIHTTPRequest *)request
+{
+    NSString *responseString = [request responseString];
+    
+    NSLog(@"responseString %@", responseString);
+    
+    self.requestBool = YES;
+    
+    [self dismissModalViewControllerAnimated:YES];
+
+}
+
+//请求失败时候执行
+- (void)requestFailed:(ASIHTTPRequest *)request
+{
+    NSError *error = [request error];
+    NSLog(@"error : %@", error);
+
+    self.requestBool = YES;
+    
+    [self dismissModalViewControllerAnimated:YES];
+}
+
+
+- (NSString*)deviceString
+{
+    // 需要#import "sys/utsname.h"
+    struct utsname systemInfo;
+    uname(&systemInfo);
+    NSString *deviceString = [NSString stringWithCString:systemInfo.machine encoding:NSUTF8StringEncoding];
+    
+    if ([deviceString isEqualToString:@"iPhone1,1"])    return @"iPhone 1G";
+    if ([deviceString isEqualToString:@"iPhone1,2"])    return @"iPhone 3G";
+    if ([deviceString isEqualToString:@"iPhone2,1"])    return @"iPhone 3GS";
+    if ([deviceString isEqualToString:@"iPhone3,1"])    return @"iPhone 4";
+    if ([deviceString isEqualToString:@"iPhone4,1"])    return @"iPhone 4S";
+    if ([deviceString isEqualToString:@"iPhone5,2"])    return @"iPhone 5";
+    if ([deviceString isEqualToString:@"iPhone3,2"])    return @"Verizon iPhone 4";
+    if ([deviceString isEqualToString:@"iPod1,1"])      return @"iPod Touch 1G";
+    if ([deviceString isEqualToString:@"iPod2,1"])      return @"iPod Touch 2G";
+    if ([deviceString isEqualToString:@"iPod3,1"])      return @"iPod Touch 3G";
+    if ([deviceString isEqualToString:@"iPod4,1"])      return @"iPod Touch 4G";
+    if ([deviceString isEqualToString:@"iPad1,1"])      return @"iPad";
+    if ([deviceString isEqualToString:@"iPad2,1"])      return @"iPad 2 (WiFi)";
+    if ([deviceString isEqualToString:@"iPad2,2"])      return @"iPad 2 (GSM)";
+    if ([deviceString isEqualToString:@"iPad2,3"])      return @"iPad 2 (CDMA)";
+    if ([deviceString isEqualToString:@"i386"])         return @"Simulator";
+    if ([deviceString isEqualToString:@"x86_64"])       return @"Simulator";
+    NSLog(@"NOTE: Unknown device type: %@", deviceString);
+    return deviceString;
+}
+
+
+- (void)didReceiveMemoryWarning
+{
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+@end
